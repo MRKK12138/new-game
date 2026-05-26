@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>鍒犻櫎鏄敮涓€鎶€鑳?- Demo</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; font-family: system-ui, sans-serif; background:#0f0f13; color:#f5f5f5; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 16px; display:grid; grid-template-columns:320px 1fr; gap:16px; }
+    .panel { background:#1a1a22; border:1px solid #303040; border-radius:12px; padding:12px; }
+    h1,h2,h3 { margin: 0 0 10px; }
+    .muted { color:#b7b7c9; font-size:14px; }
+    .world {
+      position:relative; height:560px; border-radius:12px; overflow:hidden;
+      background: linear-gradient(#121524, #0f1020);
+      border:1px solid #2c3150;
+    }
+    .obj { position:absolute; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; text-align:center; padding:4px; box-sizing:border-box; user-select:none; }
+    .wall{ background:#5f6b89; }
+    .door{ background:#7a4d2f; }
+    .enemy{ background:#8a2635; }
+    .npc{ background:#2a6f4f; }
+    .key{ background:#b09b3f; color:#111; }
+    .goal{ background:#36427f; border:2px dashed #9db0ff; }
+    .player{ background:#f5f5f5; color:#111; width:30px; height:30px; border-radius:50%; z-index:10; }
+    .hidden-red [data-color="red"] { visibility:hidden; }
+    .log { max-height:170px; overflow:auto; font-size:13px; line-height:1.4; padding-right:4px; }
+    button, select { width:100%; margin-top:8px; background:#2b3152; color:#fff; border:1px solid #495694; border-radius:8px; padding:8px; }
+    button:hover { filter:brightness(1.1); cursor:pointer; }
+    .stat { font-size:14px; margin:5px 0; }
+    .badge { display:inline-block; padding:2px 7px; border-radius:999px; background:#29335a; margin:0 4px 4px 0; font-size:12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="panel">
+      <h1>鍒犻櫎鏄敮涓€鎶€鑳?/h1>
+      <p class="muted">WASD绉诲姩銆備綘涓嶈兘鏀诲嚮/璺宠穬锛屽彧鑳藉垹闄ゃ€傚垹鎺夌洰鏍囦細鏀瑰彉瑙勫垯锛屼篃浼氬け鍘荤嚎绱笌鎰忎箟銆?/p>
+
+      <h3>鍒犻櫎鐩爣</h3>
+      <select id="deleteTarget"></select>
+      <button id="deleteBtn">鎵ц鍒犻櫎</button>
+
+      <h3 style="margin-top:14px;">鐘舵€?/h3>
+      <div class="stat">绋冲畾搴︼細<span id="stability"></span></div>
+      <div class="stat">璁板繂锛?span id="memory"></span></div>
+      <div class="stat">绾跨储锛?span id="clues"></span></div>
+      <div class="stat">鍏崇郴锛?span id="relation"></span></div>
+      <div id="rules"></div>
+
+      <h3 style="margin-top:14px;">鏃ュ織</h3>
+      <div class="log" id="log"></div>
+    </section>
+
+    <section class="world panel" id="world"></section>
+  </div>
+
+<script>
+const state = {
+  stability: 100,
+  memory: ["鎴戞浘缁忓拰缁胯。浜虹害瀹氾細鈥樼孩闂ㄥ悗鏄湡鐩糕€欍€?, "鏁屼汉瀹堢潃涓€鎶婃棫閽ュ寵銆?],
+  clues: ["绾㈤棬鍚庢槸鐪熺浉", "鏁屼汉鎺夐挜鍖?],
+  relation: ["缁胯。浜?],
+  deleted: new Set(),
+  noGravity: false,
+  noTime: false,
+  noWordDoor: false,
+  worldOpen: false,
+  won: false,
+};
+
+const objects = [
+  { id:"wall1", type:"wall", x:90, y:120, w:180, h:24, label:"澧?, color:"blue" },
+  { id:"door1", type:"door", x:540, y:130, w:34, h:100, label:"绾㈤棬", color:"red" },
+  { id:"enemy1", type:"enemy", x:350, y:350, w:40, h:40, label:"鏁屼汉", color:"red" },
+  { id:"npc1", type:"npc", x:170, y:380, w:56, h:56, label:"缁胯。浜?, color:"green" },
+  { id:"key1", type:"key", x:520, y:350, w:26, h:26, label:"閽ュ寵", color:"yellow", hidden:true },
+  { id:"goal", type:"goal", x:760, y:110, w:110, h:110, label:"缁堢偣锛氱湡鐩?, color:"blue" }
+];
+
+const player = { x:60, y:60, w:30, h:30, speed: 3 };
+const world = document.getElementById('world');
+const logEl = document.getElementById('log');
+const delTarget = document.getElementById('deleteTarget');
+
+function log(msg){
+  const line = document.createElement('div');
+  line.textContent = `鈥?${msg}`;
+  logEl.prepend(line);
+}
+
+function initDeleteOptions(){
+  const options = [
+    ["door1","鍒犻櫎闂?], ["wall1","鍒犻櫎澧?], ["enemy1","鍒犻櫎鏁屼汉"],
+    ["memory","鍒犻櫎鑷繁鐨勮蹇?], ["relation","鍒犻櫎瑙掕壊鍏崇郴"], ["time","鍒犻櫎涓€娈垫椂闂?],
+    ["red","鍒犻櫎鈥樼孩鑹测€?], ["wordDoor","鍒犻櫎鈥橀棬鈥欒繖涓瘝"], ["gravity","鍒犻櫎鈥橀噸鍔涒€欒鍒?]
+  ];
+  delTarget.innerHTML = options.map(([v,t])=>`<option value="${v}">${t}</option>`).join('');
+}
+
+function render(){
+  world.innerHTML = '';
+  if(state.deleted.has('red')) world.classList.add('hidden-red'); else world.classList.remove('hidden-red');
+
+  for(const o of objects){
+    if(state.deleted.has(o.id)) continue;
+    if(o.hidden) continue;
+    if(state.noWordDoor && o.type === 'door') continue;
+    const el = document.createElement('div');
+    el.className = `obj ${o.type}`;
+    el.dataset.color = o.color;
+    el.style.left = o.x+'px'; el.style.top = o.y+'px';
+    el.style.width = o.w+'px'; el.style.height = o.h+'px';
+    el.textContent = o.label;
+    world.appendChild(el);
+  }
+  const p = document.createElement('div');
+  p.className='obj player';
+  p.textContent='浣?;
+  p.style.left = player.x+'px'; p.style.top = player.y+'px';
+  world.appendChild(p);
+
+  document.getElementById('stability').textContent = state.stability;
+  document.getElementById('memory').textContent = state.memory.length ? state.memory.join(' / ') : '锛堢┖鐧斤級';
+  document.getElementById('clues').textContent = state.clues.length ? state.clues.join(' / ') : '锛堟棤锛?;
+  document.getElementById('relation').textContent = state.relation.length ? state.relation.join(' / ') : '锛堟棤锛?;
+
+  const badges=[];
+  if(state.deleted.has('red')) badges.push('绾㈣壊宸插垹闄?);
+  if(state.noGravity) badges.push('鏃犻噸鍔?);
+  if(state.noTime) badges.push('鏃堕棿娈嬬己');
+  if(state.noWordDoor) badges.push('璇嶆眹鈥滈棬鈥濆凡鍒犻櫎');
+  document.getElementById('rules').innerHTML = badges.map(b=>`<span class="badge">${b}</span>`).join('');
+
+}
+
+function applyCost(cost, msg){
+  state.stability = Math.max(0, state.stability - cost);
+  log(`${msg}锛堢ǔ瀹氬害 -${cost}锛塦);
+  if(state.stability <= 0){
+    alert('涓栫晫澶卞幓鎰忎箟锛屼綘涔熸秷鏁ｄ簡銆?);
+    location.reload();
+  }
+}
+
+function removeTarget(){
+  const t = delTarget.value;
+  if(state.deleted.has(t)) return log('杩欎釜宸茬粡涓嶅瓨鍦ㄤ簡銆?);
+
+  switch(t){
+    case 'door1': state.deleted.add('door1'); state.worldOpen = true; applyCost(12,'浣犲垹闄や簡闂細鎴块棿姘歌繙鏃犳硶鍏抽棴'); break;
+    case 'wall1': state.deleted.add('wall1'); applyCost(8,'浣犲垹闄や簡澧欙細杈圭晫琚姽骞?); break;
+    case 'enemy1':
+      state.deleted.add('enemy1');
+      state.clues = state.clues.filter(c=>!c.includes('閽ュ寱'));
+      applyCost(15,'浣犲垹闄や簡鏁屼汉锛氳繛鍚屽畠瀹堟姢鐨勭嚎绱竴璧锋秷澶?);
+      break;
+    case 'memory':
+      state.memory = [];
+      state.relation = [];
+      applyCost(18,'浣犲垹闄や簡鐥涜嫤璁板繂锛氫笌涔嬪叧鑱旂殑浜轰篃琚繕璁?);
+      break;
+    case 'relation':
+      state.relation = [];
+      state.clues = state.clues.filter(c=>!c.includes('绾㈤棬'));
+      applyCost(14,'浣犲垹闄や簡鍏崇郴锛氶偅鍙ョ害瀹氫篃澶辨晥浜?);
+      break;
+    case 'time':
+      state.noTime = true;
+      player.speed = 5;
+      applyCost(10,'浣犲垹闄や簡涓€娈垫椂闂达細绉诲姩鍙樺揩锛屼絾缁嗚妭琚烦杩?);
+      break;
+    case 'red':
+      state.deleted.add('red');
+      applyCost(10,'浣犲垹闄や簡绾㈣壊锛氭墍鏈夌孩鑹茬墿浣撲笉鍙');
+      break;
+    case 'wordDoor':
+      state.noWordDoor = true;
+      applyCost(9,'浣犲垹闄や簡鈥滈棬鈥濊繖涓瘝锛氶棬浣滀负姒傚康琚姽鍘?);
+      break;
+    case 'gravity':
+      state.noGravity = true;
+      applyCost(20,'浣犲垹闄や簡閲嶅姏锛氫綘灏嗘寔缁紓绉伙紝闅句互鍋滀笅');
+      break;
+  }
+
+  if(!state.deleted.has('enemy1')){
+    const key = objects.find(o=>o.id==='key1');
+    key.hidden = false;
+  }
+  if(state.deleted.has('enemy1')){
+    const key = objects.find(o=>o.id==='key1');
+    key.hidden = true;
+  }
+  render();
+}
+
+function collides(a,b){
+  return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
+}
+
+function blockedBySolid(nx, ny){
+  const next = {x:nx,y:ny,w:player.w,h:player.h};
+  for(const o of objects){
+    if(state.deleted.has(o.id)) continue;
+    if(o.type==='wall' || o.type==='door'){
+      if(o.type==='door' && (state.worldOpen || state.noWordDoor)) continue;
+      if(collides(next,o)) return true;
+    }
+  }
+  return false;
+}
+
+const keys = {};
+document.addEventListener('keydown', e=> keys[e.key.toLowerCase()]=true);
+document.addEventListener('keyup', e=> keys[e.key.toLowerCase()]=false);
+document.getElementById('deleteBtn').addEventListener('click', removeTarget);
+
+function loop(){
+  if(!state.won){
+    let dx=0,dy=0;
+    if(keys.w) dy -= player.speed;
+    if(keys.s) dy += player.speed;
+    if(keys.a) dx -= player.speed;
+    if(keys.d) dx += player.speed;
+
+    if(state.noGravity){ dy -= 1.5; }
+
+    const nx = Math.max(0, Math.min(900, player.x + dx));
+    const ny = Math.max(0, Math.min(520, player.y + dy));
+
+    if(!blockedBySolid(nx, player.y)) player.x = nx;
+    if(!blockedBySolid(player.x, ny)) player.y = ny;
+
+    const goal = objects.find(o=>o.id==='goal');
+    if(collides(player, goal)){
+      state.won = true;
+      const used = 100 - state.stability;
+      alert(`浣犳姷杈句簡鐪熺浉銆俓n浣犱竴鍏卞垹闄や簡涓栫晫 ${used}% 鐨勭ǔ瀹氬害銆俓n鍓╀笅鐨勬剰涔夌敱浣犲喅瀹氥€俙);
+    }
+  }
+  render();
+  requestAnimationFrame(loop);
+}
+
+initDeleteOptions();
+log('浣犻啋鏉ュ悗鍙戠幇鑷繁鍙湁涓€涓兘鍔涳細鍒犻櫎銆?);
+log('鎻愮ず锛氳瘯鐫€姣旇緝涓嶅悓鍒犻櫎椤哄簭閫犳垚鐨勫悗鏋溿€?);
+loop();
+</script>
+</body>
+</html>
