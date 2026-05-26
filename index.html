@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>鍒犻櫎鏄敮涓€鎶€鑳?- Demo</title>
+  <title>删除是唯一技能 - Demo</title>
   <style>
     :root { color-scheme: dark; }
     body { margin: 0; font-family: system-ui, sans-serif; background:#0f0f13; color:#f5f5f5; }
@@ -35,21 +35,21 @@
 <body>
   <div class="wrap">
     <section class="panel">
-      <h1>鍒犻櫎鏄敮涓€鎶€鑳?/h1>
-      <p class="muted">WASD绉诲姩銆備綘涓嶈兘鏀诲嚮/璺宠穬锛屽彧鑳藉垹闄ゃ€傚垹鎺夌洰鏍囦細鏀瑰彉瑙勫垯锛屼篃浼氬け鍘荤嚎绱笌鎰忎箟銆?/p>
+      <h1>删除是唯一技能</h1>
+      <p class="muted">WASD移动。你不能攻击/跳跃，只能删除。删掉目标会改变规则，也会失去线索与意义。</p>
 
-      <h3>鍒犻櫎鐩爣</h3>
+      <h3>删除目标</h3>
       <select id="deleteTarget"></select>
-      <button id="deleteBtn">鎵ц鍒犻櫎</button>
+      <button id="deleteBtn">执行删除</button>
 
-      <h3 style="margin-top:14px;">鐘舵€?/h3>
-      <div class="stat">绋冲畾搴︼細<span id="stability"></span></div>
-      <div class="stat">璁板繂锛?span id="memory"></span></div>
-      <div class="stat">绾跨储锛?span id="clues"></span></div>
-      <div class="stat">鍏崇郴锛?span id="relation"></span></div>
+      <h3 style="margin-top:14px;">状态</h3>
+      <div class="stat">稳定度：<span id="stability"></span></div>
+      <div class="stat">记忆：<span id="memory"></span></div>
+      <div class="stat">线索：<span id="clues"></span></div>
+      <div class="stat">关系：<span id="relation"></span></div>
       <div id="rules"></div>
 
-      <h3 style="margin-top:14px;">鏃ュ織</h3>
+      <h3 style="margin-top:14px;">日志</h3>
       <div class="log" id="log"></div>
     </section>
 
@@ -59,9 +59,9 @@
 <script>
 const state = {
   stability: 100,
-  memory: ["鎴戞浘缁忓拰缁胯。浜虹害瀹氾細鈥樼孩闂ㄥ悗鏄湡鐩糕€欍€?, "鏁屼汉瀹堢潃涓€鎶婃棫閽ュ寵銆?],
-  clues: ["绾㈤棬鍚庢槸鐪熺浉", "鏁屼汉鎺夐挜鍖?],
-  relation: ["缁胯。浜?],
+  memory: ["我曾经和绿衣人约定：‘红门后是真相’。", "敌人守着一把旧钥匙。"],
+  clues: ["红门后是真相", "敌人掉钥匙"],
+  relation: ["绿衣人"],
   deleted: new Set(),
   noGravity: false,
   noTime: false,
@@ -71,12 +71,12 @@ const state = {
 };
 
 const objects = [
-  { id:"wall1", type:"wall", x:90, y:120, w:180, h:24, label:"澧?, color:"blue" },
-  { id:"door1", type:"door", x:540, y:130, w:34, h:100, label:"绾㈤棬", color:"red" },
-  { id:"enemy1", type:"enemy", x:350, y:350, w:40, h:40, label:"鏁屼汉", color:"red" },
-  { id:"npc1", type:"npc", x:170, y:380, w:56, h:56, label:"缁胯。浜?, color:"green" },
-  { id:"key1", type:"key", x:520, y:350, w:26, h:26, label:"閽ュ寵", color:"yellow", hidden:true },
-  { id:"goal", type:"goal", x:760, y:110, w:110, h:110, label:"缁堢偣锛氱湡鐩?, color:"blue" }
+  { id:"wall1", type:"wall", x:90, y:120, w:180, h:24, label:"墙", color:"blue" },
+  { id:"door1", type:"door", x:540, y:130, w:34, h:100, label:"红门", color:"red" },
+  { id:"enemy1", type:"enemy", x:350, y:350, w:40, h:40, label:"敌人", color:"red" },
+  { id:"npc1", type:"npc", x:170, y:380, w:56, h:56, label:"绿衣人", color:"green" },
+  { id:"key1", type:"key", x:520, y:350, w:26, h:26, label:"钥匙", color:"yellow", hidden:true },
+  { id:"goal", type:"goal", x:760, y:110, w:110, h:110, label:"终点：真相", color:"blue" }
 ];
 
 const player = { x:60, y:60, w:30, h:30, speed: 3 };
@@ -86,15 +86,15 @@ const delTarget = document.getElementById('deleteTarget');
 
 function log(msg){
   const line = document.createElement('div');
-  line.textContent = `鈥?${msg}`;
+  line.textContent = `• ${msg}`;
   logEl.prepend(line);
 }
 
 function initDeleteOptions(){
   const options = [
-    ["door1","鍒犻櫎闂?], ["wall1","鍒犻櫎澧?], ["enemy1","鍒犻櫎鏁屼汉"],
-    ["memory","鍒犻櫎鑷繁鐨勮蹇?], ["relation","鍒犻櫎瑙掕壊鍏崇郴"], ["time","鍒犻櫎涓€娈垫椂闂?],
-    ["red","鍒犻櫎鈥樼孩鑹测€?], ["wordDoor","鍒犻櫎鈥橀棬鈥欒繖涓瘝"], ["gravity","鍒犻櫎鈥橀噸鍔涒€欒鍒?]
+    ["door1","删除门"], ["wall1","删除墙"], ["enemy1","删除敌人"],
+    ["memory","删除自己的记忆"], ["relation","删除角色关系"], ["time","删除一段时间"],
+    ["red","删除‘红色’"], ["wordDoor","删除‘门’这个词"], ["gravity","删除‘重力’规则"]
   ];
   delTarget.innerHTML = options.map(([v,t])=>`<option value="${v}">${t}</option>`).join('');
 }
@@ -117,71 +117,71 @@ function render(){
   }
   const p = document.createElement('div');
   p.className='obj player';
-  p.textContent='浣?;
+  p.textContent='你';
   p.style.left = player.x+'px'; p.style.top = player.y+'px';
   world.appendChild(p);
 
   document.getElementById('stability').textContent = state.stability;
-  document.getElementById('memory').textContent = state.memory.length ? state.memory.join(' / ') : '锛堢┖鐧斤級';
-  document.getElementById('clues').textContent = state.clues.length ? state.clues.join(' / ') : '锛堟棤锛?;
-  document.getElementById('relation').textContent = state.relation.length ? state.relation.join(' / ') : '锛堟棤锛?;
+  document.getElementById('memory').textContent = state.memory.length ? state.memory.join(' / ') : '（空白）';
+  document.getElementById('clues').textContent = state.clues.length ? state.clues.join(' / ') : '（无）';
+  document.getElementById('relation').textContent = state.relation.length ? state.relation.join(' / ') : '（无）';
 
   const badges=[];
-  if(state.deleted.has('red')) badges.push('绾㈣壊宸插垹闄?);
-  if(state.noGravity) badges.push('鏃犻噸鍔?);
-  if(state.noTime) badges.push('鏃堕棿娈嬬己');
-  if(state.noWordDoor) badges.push('璇嶆眹鈥滈棬鈥濆凡鍒犻櫎');
+  if(state.deleted.has('red')) badges.push('红色已删除');
+  if(state.noGravity) badges.push('无重力');
+  if(state.noTime) badges.push('时间残缺');
+  if(state.noWordDoor) badges.push('词汇“门”已删除');
   document.getElementById('rules').innerHTML = badges.map(b=>`<span class="badge">${b}</span>`).join('');
 
 }
 
 function applyCost(cost, msg){
   state.stability = Math.max(0, state.stability - cost);
-  log(`${msg}锛堢ǔ瀹氬害 -${cost}锛塦);
+  log(`${msg}（稳定度 -${cost}）`);
   if(state.stability <= 0){
-    alert('涓栫晫澶卞幓鎰忎箟锛屼綘涔熸秷鏁ｄ簡銆?);
+    alert('世界失去意义，你也消散了。');
     location.reload();
   }
 }
 
 function removeTarget(){
   const t = delTarget.value;
-  if(state.deleted.has(t)) return log('杩欎釜宸茬粡涓嶅瓨鍦ㄤ簡銆?);
+  if(state.deleted.has(t)) return log('这个已经不存在了。');
 
   switch(t){
-    case 'door1': state.deleted.add('door1'); state.worldOpen = true; applyCost(12,'浣犲垹闄や簡闂細鎴块棿姘歌繙鏃犳硶鍏抽棴'); break;
-    case 'wall1': state.deleted.add('wall1'); applyCost(8,'浣犲垹闄や簡澧欙細杈圭晫琚姽骞?); break;
+    case 'door1': state.deleted.add('door1'); state.worldOpen = true; applyCost(12,'你删除了门：房间永远无法关闭'); break;
+    case 'wall1': state.deleted.add('wall1'); applyCost(8,'你删除了墙：边界被抹平'); break;
     case 'enemy1':
       state.deleted.add('enemy1');
-      state.clues = state.clues.filter(c=>!c.includes('閽ュ寱'));
-      applyCost(15,'浣犲垹闄や簡鏁屼汉锛氳繛鍚屽畠瀹堟姢鐨勭嚎绱竴璧锋秷澶?);
+      state.clues = state.clues.filter(c=>!c.includes('钥匙'));
+      applyCost(15,'你删除了敌人：连同它守护的线索一起消失');
       break;
     case 'memory':
       state.memory = [];
       state.relation = [];
-      applyCost(18,'浣犲垹闄や簡鐥涜嫤璁板繂锛氫笌涔嬪叧鑱旂殑浜轰篃琚繕璁?);
+      applyCost(18,'你删除了痛苦记忆：与之关联的人也被忘记');
       break;
     case 'relation':
       state.relation = [];
-      state.clues = state.clues.filter(c=>!c.includes('绾㈤棬'));
-      applyCost(14,'浣犲垹闄や簡鍏崇郴锛氶偅鍙ョ害瀹氫篃澶辨晥浜?);
+      state.clues = state.clues.filter(c=>!c.includes('红门'));
+      applyCost(14,'你删除了关系：那句约定也失效了');
       break;
     case 'time':
       state.noTime = true;
       player.speed = 5;
-      applyCost(10,'浣犲垹闄や簡涓€娈垫椂闂达細绉诲姩鍙樺揩锛屼絾缁嗚妭琚烦杩?);
+      applyCost(10,'你删除了一段时间：移动变快，但细节被跳过');
       break;
     case 'red':
       state.deleted.add('red');
-      applyCost(10,'浣犲垹闄や簡绾㈣壊锛氭墍鏈夌孩鑹茬墿浣撲笉鍙');
+      applyCost(10,'你删除了红色：所有红色物体不可见');
       break;
     case 'wordDoor':
       state.noWordDoor = true;
-      applyCost(9,'浣犲垹闄や簡鈥滈棬鈥濊繖涓瘝锛氶棬浣滀负姒傚康琚姽鍘?);
+      applyCost(9,'你删除了“门”这个词：门作为概念被抹去');
       break;
     case 'gravity':
       state.noGravity = true;
-      applyCost(20,'浣犲垹闄や簡閲嶅姏锛氫綘灏嗘寔缁紓绉伙紝闅句互鍋滀笅');
+      applyCost(20,'你删除了重力：你将持续漂移，难以停下');
       break;
   }
 
@@ -237,7 +237,7 @@ function loop(){
     if(collides(player, goal)){
       state.won = true;
       const used = 100 - state.stability;
-      alert(`浣犳姷杈句簡鐪熺浉銆俓n浣犱竴鍏卞垹闄や簡涓栫晫 ${used}% 鐨勭ǔ瀹氬害銆俓n鍓╀笅鐨勬剰涔夌敱浣犲喅瀹氥€俙);
+      alert(`你抵达了真相。\n你一共删除了世界 ${used}% 的稳定度。\n剩下的意义由你决定。`);
     }
   }
   render();
@@ -245,8 +245,8 @@ function loop(){
 }
 
 initDeleteOptions();
-log('浣犻啋鏉ュ悗鍙戠幇鑷繁鍙湁涓€涓兘鍔涳細鍒犻櫎銆?);
-log('鎻愮ず锛氳瘯鐫€姣旇緝涓嶅悓鍒犻櫎椤哄簭閫犳垚鐨勫悗鏋溿€?);
+log('你醒来后发现自己只有一个能力：删除。');
+log('提示：试着比较不同删除顺序造成的后果。');
 loop();
 </script>
 </body>

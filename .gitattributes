@@ -1,0 +1,8 @@
+# 确保所有文本文件统一使用UTF-8编码
+* text=auto
+*.html text eol=lf encoding=UTF-8
+*.markdown text eol=lf encoding=UTF-8
+*.md text eol=lf encoding=UTF-8
+*.js text eol=lf encoding=UTF-8
+*.css text eol=lf encoding=UTF-8
+*.json text eol=lf encoding=UTF-8
