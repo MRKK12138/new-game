@@ -6,60 +6,157 @@
   <title>删除是唯一技能 - Demo</title>
   <style>
     :root { color-scheme: dark; }
-    body { margin: 0; font-family: system-ui, sans-serif; background:#0f0f13; color:#f5f5f5; }
-    .wrap { max-width: 980px; margin: 0 auto; padding: 16px; display:grid; grid-template-columns:320px 1fr; gap:16px; }
-    .panel { background:#1a1a22; border:1px solid #303040; border-radius:12px; padding:12px; }
-    h1,h2,h3 { margin: 0 0 10px; }
-    .muted { color:#b7b7c9; font-size:14px; }
-    .world {
-      position:relative; height:560px; border-radius:12px; overflow:hidden;
-      background: linear-gradient(#121524, #0f1020);
-      border:1px solid #2c3150;
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f0f13;
+      color: #f5f5f5;
     }
-    .obj { position:absolute; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; text-align:center; padding:4px; box-sizing:border-box; user-select:none; }
-    .wall{ background:#5f6b89; }
-    .door{ background:#7a4d2f; }
-    .enemy{ background:#8a2635; }
-    .npc{ background:#2a6f4f; }
-    .key{ background:#b09b3f; color:#111; }
-    .goal{ background:#36427f; border:2px dashed #9db0ff; }
-    .player{ background:#f5f5f5; color:#111; width:30px; height:30px; border-radius:50%; z-index:10; }
-    .hidden-red [data-color="red"] { visibility:hidden; }
-    .log { max-height:170px; overflow:auto; font-size:13px; line-height:1.4; padding-right:4px; }
-    button, select { width:100%; margin-top:8px; background:#2b3152; color:#fff; border:1px solid #495694; border-radius:8px; padding:8px; }
-    button:hover { filter:brightness(1.1); cursor:pointer; }
-    .stat { font-size:14px; margin:5px 0; }
-    .badge { display:inline-block; padding:2px 7px; border-radius:999px; background:#29335a; margin:0 4px 4px 0; font-size:12px; }
+    .wrap {
+      max-width: 1260px;
+      margin: 0 auto;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 320px 900px;
+      gap: 16px;
+      align-items: start;
+    }
+    .panel {
+      background: #1a1a22;
+      border: 1px solid #303040;
+      border-radius: 12px;
+      padding: 12px;
+    }
+    h1, h2, h3 { margin: 0 0 10px; }
+    h1 { font-size: 24px; }
+    h3 { margin-top: 14px; font-size: 16px; }
+    .muted { color: #b7b7c9; font-size: 14px; line-height: 1.55; }
+    .guide {
+      margin: 0 0 12px;
+      padding: 10px;
+      border: 1px solid #46527e;
+      border-radius: 8px;
+      background: #20263d;
+      color: #eef2ff;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    .world {
+      position: relative;
+      width: 900px;
+      height: 560px;
+      overflow: hidden;
+      background:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(#121524, #0f1020);
+      background-size: 40px 40px, 40px 40px, auto;
+      border: 2px solid #7d8bd6;
+      box-shadow: inset 0 0 0 4px rgba(125,139,214,0.14);
+    }
+    .obj {
+      position: absolute;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      text-align: center;
+      padding: 4px;
+      user-select: none;
+    }
+    .wall { background: #5f6b89; }
+    .barrier { background: #46506f; border-radius: 0; }
+    .door { background: #7a4d2f; }
+    .enemy { background: #8a2635; }
+    .npc { background: #2a6f4f; }
+    .key { background: #b09b3f; color: #111; }
+    .goal {
+      background: rgba(54,66,127,0.88);
+      border: 2px dashed #9db0ff;
+      color: #fff;
+    }
+    .player {
+      background: #f5f5f5;
+      color: #111;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      z-index: 10;
+      font-weight: 700;
+    }
+    .hidden-red [data-color="red"] { visibility: hidden; }
+    .log {
+      max-height: 170px;
+      overflow: auto;
+      font-size: 13px;
+      line-height: 1.4;
+      padding-right: 4px;
+    }
+    button, select {
+      width: 100%;
+      margin-top: 8px;
+      background: #2b3152;
+      color: #fff;
+      border: 1px solid #495694;
+      border-radius: 8px;
+      padding: 8px;
+    }
+    button:hover:not(:disabled) { filter: brightness(1.1); cursor: pointer; }
+    button:disabled, option:disabled { color: #8d93aa; }
+    .stat { font-size: 14px; margin: 5px 0; line-height: 1.4; }
+    .badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: #29335a;
+      margin: 0 4px 4px 0;
+      font-size: 12px;
+    }
+    @media (max-width: 980px) {
+      .wrap {
+        grid-template-columns: 1fr;
+        overflow-x: auto;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <section class="panel">
       <h1>删除是唯一技能</h1>
-      <p class="muted">WASD移动。你不能攻击/跳跃，只能删除。删掉目标会改变规则，也会失去线索与意义。</p>
+      <div class="guide">
+        目标：到达门后的蓝色虚线区域“终点：真相”。<br />
+        操作：按 W/A/S/D 移动，在下方选择一个目标后点击“执行删除”。<br />
+        注意：每个目标只能删除一次，稳定度归零会失败。
+      </div>
+      <p class="muted">你不能攻击，也不能跳跃。你能做的只有删除，而每一次删除都会让世界少掉一部分稳定。</p>
 
       <h3>删除目标</h3>
       <select id="deleteTarget"></select>
       <button id="deleteBtn">执行删除</button>
 
-      <h3 style="margin-top:14px;">状态</h3>
+      <h3>状态</h3>
       <div class="stat">稳定度：<span id="stability"></span></div>
       <div class="stat">记忆：<span id="memory"></span></div>
       <div class="stat">线索：<span id="clues"></span></div>
       <div class="stat">关系：<span id="relation"></span></div>
       <div id="rules"></div>
 
-      <h3 style="margin-top:14px;">日志</h3>
+      <h3>游戏日志</h3>
       <div class="log" id="log"></div>
     </section>
 
-    <section class="world panel" id="world"></section>
+    <section class="world panel" id="world" aria-label="游戏世界"></section>
   </div>
 
 <script>
+const WORLD = { w: 900, h: 560 };
+
 const state = {
   stability: 100,
-  memory: ["我曾经和绿衣人约定：‘红门后是真相’。", "敌人守着一把旧钥匙。"],
+  memory: ["我曾经和绿衣人约定：红门后是真相。", "敌人守着一把旧钥匙。"],
   clues: ["红门后是真相", "敌人掉钥匙"],
   relation: ["绿衣人"],
   deleted: new Set(),
@@ -70,183 +167,239 @@ const state = {
   won: false,
 };
 
-const objects = [
-  { id:"wall1", type:"wall", x:90, y:120, w:180, h:24, label:"墙", color:"blue" },
-  { id:"door1", type:"door", x:540, y:130, w:34, h:100, label:"红门", color:"red" },
-  { id:"enemy1", type:"enemy", x:350, y:350, w:40, h:40, label:"敌人", color:"red" },
-  { id:"npc1", type:"npc", x:170, y:380, w:56, h:56, label:"绿衣人", color:"green" },
-  { id:"key1", type:"key", x:520, y:350, w:26, h:26, label:"钥匙", color:"yellow", hidden:true },
-  { id:"goal", type:"goal", x:760, y:110, w:110, h:110, label:"终点：真相", color:"blue" }
+const deleteOptions = [
+  ["door1", "删除门"],
+  ["wall1", "删除墙"],
+  ["enemy1", "删除敌人"],
+  ["memory", "删除自己的记忆"],
+  ["relation", "删除角色关系"],
+  ["time", "删除一段时间"],
+  ["red", "删除“红色”"],
+  ["wordDoor", "删除“门”这个词"],
+  ["gravity", "删除“重力”规则"],
 ];
 
-const player = { x:60, y:60, w:30, h:30, speed: 3 };
-const world = document.getElementById('world');
-const logEl = document.getElementById('log');
-const delTarget = document.getElementById('deleteTarget');
+const objects = [
+  { id: "wall1", type: "wall", x: 90, y: 120, w: 180, h: 24, label: "墙", color: "blue", solid: true },
+  { id: "gateTop", type: "barrier", x: 540, y: 0, w: 34, h: 130, label: "", color: "blue", solid: true, permanent: true },
+  { id: "door1", type: "door", x: 540, y: 130, w: 34, h: 100, label: "红门", color: "red", solid: true },
+  { id: "gateBottom", type: "barrier", x: 540, y: 230, w: 34, h: 330, label: "", color: "blue", solid: true, permanent: true },
+  { id: "enemy1", type: "enemy", x: 350, y: 350, w: 40, h: 40, label: "敌人", color: "red" },
+  { id: "npc1", type: "npc", x: 170, y: 380, w: 56, h: 56, label: "绿衣人", color: "green" },
+  { id: "key1", type: "key", x: 520, y: 350, w: 26, h: 26, label: "钥匙", color: "yellow", hidden: true },
+  { id: "goal", type: "goal", x: 760, y: 110, w: 110, h: 110, label: "终点：真相", color: "blue" },
+];
 
-function log(msg){
-  const line = document.createElement('div');
+const player = { x: 60, y: 60, w: 30, h: 30, speed: 3 };
+const world = document.getElementById("world");
+const logEl = document.getElementById("log");
+const delTarget = document.getElementById("deleteTarget");
+
+function log(msg) {
+  const line = document.createElement("div");
   line.textContent = `• ${msg}`;
   logEl.prepend(line);
 }
 
-function initDeleteOptions(){
-  const options = [
-    ["door1","删除门"], ["wall1","删除墙"], ["enemy1","删除敌人"],
-    ["memory","删除自己的记忆"], ["relation","删除角色关系"], ["time","删除一段时间"],
-    ["red","删除‘红色’"], ["wordDoor","删除‘门’这个词"], ["gravity","删除‘重力’规则"]
-  ];
-  delTarget.innerHTML = options.map(([v,t])=>`<option value="${v}">${t}</option>`).join('');
+function initDeleteOptions() {
+  delTarget.innerHTML = deleteOptions
+    .map(([value, text]) => `<option value="${value}">${text}</option>`)
+    .join("");
 }
 
-function render(){
-  world.innerHTML = '';
-  if(state.deleted.has('red')) world.classList.add('hidden-red'); else world.classList.remove('hidden-red');
+function refreshDeleteOptions() {
+  for (const option of delTarget.options) {
+    option.disabled = state.deleted.has(option.value);
+    const baseText = deleteOptions.find(([value]) => value === option.value)[1];
+    option.textContent = option.disabled ? `${baseText}（已删除）` : baseText;
+  }
 
-  for(const o of objects){
-    if(state.deleted.has(o.id)) continue;
-    if(o.hidden) continue;
-    if(state.noWordDoor && o.type === 'door') continue;
-    const el = document.createElement('div');
+  if (state.deleted.has(delTarget.value)) {
+    const next = Array.from(delTarget.options).find(option => !option.disabled);
+    if (next) delTarget.value = next.value;
+  }
+
+  document.getElementById("deleteBtn").disabled = !Array.from(delTarget.options).some(option => !option.disabled);
+}
+
+function render() {
+  world.innerHTML = "";
+  world.classList.toggle("hidden-red", state.deleted.has("red"));
+
+  for (const o of objects) {
+    if (state.deleted.has(o.id)) continue;
+    if (o.hidden) continue;
+    if (state.noWordDoor && o.type === "door") continue;
+
+    const el = document.createElement("div");
     el.className = `obj ${o.type}`;
     el.dataset.color = o.color;
-    el.style.left = o.x+'px'; el.style.top = o.y+'px';
-    el.style.width = o.w+'px'; el.style.height = o.h+'px';
+    el.style.left = `${o.x}px`;
+    el.style.top = `${o.y}px`;
+    el.style.width = `${o.w}px`;
+    el.style.height = `${o.h}px`;
     el.textContent = o.label;
     world.appendChild(el);
   }
-  const p = document.createElement('div');
-  p.className='obj player';
-  p.textContent='你';
-  p.style.left = player.x+'px'; p.style.top = player.y+'px';
+
+  const p = document.createElement("div");
+  p.className = "obj player";
+  p.textContent = "你";
+  p.style.left = `${player.x}px`;
+  p.style.top = `${player.y}px`;
   world.appendChild(p);
 
-  document.getElementById('stability').textContent = state.stability;
-  document.getElementById('memory').textContent = state.memory.length ? state.memory.join(' / ') : '（空白）';
-  document.getElementById('clues').textContent = state.clues.length ? state.clues.join(' / ') : '（无）';
-  document.getElementById('relation').textContent = state.relation.length ? state.relation.join(' / ') : '（无）';
+  document.getElementById("stability").textContent = state.stability;
+  document.getElementById("memory").textContent = state.memory.length ? state.memory.join(" / ") : "（空白）";
+  document.getElementById("clues").textContent = state.clues.length ? state.clues.join(" / ") : "（无）";
+  document.getElementById("relation").textContent = state.relation.length ? state.relation.join(" / ") : "（无）";
 
-  const badges=[];
-  if(state.deleted.has('red')) badges.push('红色已删除');
-  if(state.noGravity) badges.push('无重力');
-  if(state.noTime) badges.push('时间残缺');
-  if(state.noWordDoor) badges.push('词汇“门”已删除');
-  document.getElementById('rules').innerHTML = badges.map(b=>`<span class="badge">${b}</span>`).join('');
+  const badges = [];
+  if (state.worldOpen) badges.push("通往真相的门已打开");
+  if (state.deleted.has("red")) badges.push("红色已删除");
+  if (state.noGravity) badges.push("无重力");
+  if (state.noTime) badges.push("时间残缺");
+  if (state.noWordDoor) badges.push("词汇“门”已删除");
+  document.getElementById("rules").innerHTML = badges.map(b => `<span class="badge">${b}</span>`).join("");
 
+  refreshDeleteOptions();
 }
 
-function applyCost(cost, msg){
+function applyCost(cost, msg) {
   state.stability = Math.max(0, state.stability - cost);
   log(`${msg}（稳定度 -${cost}）`);
-  if(state.stability <= 0){
-    alert('世界失去意义，你也消散了。');
+  if (state.stability <= 0) {
+    alert("世界失去意义，你也消散了。");
     location.reload();
   }
 }
 
-function removeTarget(){
-  const t = delTarget.value;
-  if(state.deleted.has(t)) return log('这个已经不存在了。');
+function markDeleted(target) {
+  state.deleted.add(target);
+}
 
-  switch(t){
-    case 'door1': state.deleted.add('door1'); state.worldOpen = true; applyCost(12,'你删除了门：房间永远无法关闭'); break;
-    case 'wall1': state.deleted.add('wall1'); applyCost(8,'你删除了墙：边界被抹平'); break;
-    case 'enemy1':
-      state.deleted.add('enemy1');
-      state.clues = state.clues.filter(c=>!c.includes('钥匙'));
-      applyCost(15,'你删除了敌人：连同它守护的线索一起消失');
+function removeTarget() {
+  const t = delTarget.value;
+  if (state.deleted.has(t)) {
+    log("这个目标已经被删除过了，无法重复删除。");
+    render();
+    return;
+  }
+
+  switch (t) {
+    case "door1":
+      markDeleted("door1");
+      state.worldOpen = true;
+      applyCost(12, "你删除了门：房间永远无法关闭");
       break;
-    case 'memory':
+    case "wall1":
+      markDeleted("wall1");
+      applyCost(8, "你删除了墙：少了一块阻挡，也少了一点边界感");
+      break;
+    case "enemy1":
+      markDeleted("enemy1");
+      state.clues = state.clues.filter(c => !c.includes("钥匙"));
+      applyCost(15, "你删除了敌人：连同它守护的线索一起消失");
+      break;
+    case "memory":
+      markDeleted("memory");
       state.memory = [];
       state.relation = [];
-      applyCost(18,'你删除了痛苦记忆：与之关联的人也被忘记');
+      applyCost(18, "你删除了痛苦记忆：与之关联的人也被忘记");
       break;
-    case 'relation':
+    case "relation":
+      markDeleted("relation");
       state.relation = [];
-      state.clues = state.clues.filter(c=>!c.includes('红门'));
-      applyCost(14,'你删除了关系：那句约定也失效了');
+      state.clues = state.clues.filter(c => !c.includes("红门"));
+      applyCost(14, "你删除了关系：那句约定也失效了");
       break;
-    case 'time':
+    case "time":
+      markDeleted("time");
       state.noTime = true;
       player.speed = 5;
-      applyCost(10,'你删除了一段时间：移动变快，但细节被跳过');
+      applyCost(10, "你删除了一段时间：移动变快，但细节被跳过");
       break;
-    case 'red':
-      state.deleted.add('red');
-      applyCost(10,'你删除了红色：所有红色物体不可见');
+    case "red":
+      markDeleted("red");
+      applyCost(10, "你删除了红色：所有红色物体不可见");
       break;
-    case 'wordDoor':
+    case "wordDoor":
+      markDeleted("wordDoor");
       state.noWordDoor = true;
-      applyCost(9,'你删除了“门”这个词：门作为概念被抹去');
+      state.worldOpen = true;
+      applyCost(9, "你删除了“门”这个词：门作为概念被抹去");
       break;
-    case 'gravity':
+    case "gravity":
+      markDeleted("gravity");
       state.noGravity = true;
-      applyCost(20,'你删除了重力：你将持续漂移，难以停下');
+      applyCost(20, "你删除了重力：你将持续漂移，难以停下");
       break;
   }
 
-  if(!state.deleted.has('enemy1')){
-    const key = objects.find(o=>o.id==='key1');
-    key.hidden = false;
-  }
-  if(state.deleted.has('enemy1')){
-    const key = objects.find(o=>o.id==='key1');
-    key.hidden = true;
-  }
+  const key = objects.find(o => o.id === "key1");
+  key.hidden = state.deleted.has("enemy1");
+  if (!state.deleted.has("enemy1")) key.hidden = false;
+
   render();
 }
 
-function collides(a,b){
-  return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
+function collides(a, b) {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
 
-function blockedBySolid(nx, ny){
-  const next = {x:nx,y:ny,w:player.w,h:player.h};
-  for(const o of objects){
-    if(state.deleted.has(o.id)) continue;
-    if(o.type==='wall' || o.type==='door'){
-      if(o.type==='door' && (state.worldOpen || state.noWordDoor)) continue;
-      if(collides(next,o)) return true;
-    }
-  }
-  return false;
+function isSolid(o) {
+  if (!o.solid) return false;
+  if (state.deleted.has(o.id)) return false;
+  if (o.type === "door" && (state.worldOpen || state.noWordDoor)) return false;
+  return true;
+}
+
+function blockedBySolid(nx, ny) {
+  const next = { x: nx, y: ny, w: player.w, h: player.h };
+  return objects.some(o => isSolid(o) && collides(next, o));
+}
+
+function clampPlayer(value, size, max) {
+  return Math.max(0, Math.min(max - size, value));
 }
 
 const keys = {};
-document.addEventListener('keydown', e=> keys[e.key.toLowerCase()]=true);
-document.addEventListener('keyup', e=> keys[e.key.toLowerCase()]=false);
-document.getElementById('deleteBtn').addEventListener('click', removeTarget);
+document.addEventListener("keydown", e => { keys[e.key.toLowerCase()] = true; });
+document.addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; });
+document.getElementById("deleteBtn").addEventListener("click", removeTarget);
 
-function loop(){
-  if(!state.won){
-    let dx=0,dy=0;
-    if(keys.w) dy -= player.speed;
-    if(keys.s) dy += player.speed;
-    if(keys.a) dx -= player.speed;
-    if(keys.d) dx += player.speed;
+function loop() {
+  if (!state.won) {
+    let dx = 0;
+    let dy = 0;
+    if (keys.w) dy -= player.speed;
+    if (keys.s) dy += player.speed;
+    if (keys.a) dx -= player.speed;
+    if (keys.d) dx += player.speed;
+    if (state.noGravity) dy -= 1.5;
 
-    if(state.noGravity){ dy -= 1.5; }
+    const nx = clampPlayer(player.x + dx, player.w, WORLD.w);
+    const ny = clampPlayer(player.y + dy, player.h, WORLD.h);
 
-    const nx = Math.max(0, Math.min(900, player.x + dx));
-    const ny = Math.max(0, Math.min(520, player.y + dy));
+    if (!blockedBySolid(nx, player.y)) player.x = nx;
+    if (!blockedBySolid(player.x, ny)) player.y = ny;
 
-    if(!blockedBySolid(nx, player.y)) player.x = nx;
-    if(!blockedBySolid(player.x, ny)) player.y = ny;
-
-    const goal = objects.find(o=>o.id==='goal');
-    if(collides(player, goal)){
+    const goal = objects.find(o => o.id === "goal");
+    if (state.worldOpen && collides(player, goal)) {
       state.won = true;
       const used = 100 - state.stability;
       alert(`你抵达了真相。\n你一共删除了世界 ${used}% 的稳定度。\n剩下的意义由你决定。`);
     }
   }
+
   render();
   requestAnimationFrame(loop);
 }
 
 initDeleteOptions();
-log('你醒来后发现自己只有一个能力：删除。');
-log('提示：试着比较不同删除顺序造成的后果。');
+log("你醒来后发现自己只有一个能力：删除。");
+log("先找到门后的蓝色终点。门不打开时，抵达终点也不会被承认为真相。");
+render();
 loop();
 </script>
 </body>
